@@ -20,6 +20,8 @@
 #   You should have received a copy of the GNU General Public License
 #   along with do-mpc.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
+sys.path.append('../')
 import numpy as np
 from casadi import *
 from casadi.tools import *
@@ -731,7 +733,7 @@ class RealtimeController(MPC):
         xk = np.array(self.opc_client.readData(tag_in))
         
         # The NLP must be reinitialized with the most current data from the plant readings
-        self.set_initial_state(np.array(self.opc_client.readData(tag_in)), reset_history=False)
+        self.x0 = (np.array(self.opc_client.readData(tag_in)))
         self.set_initial_guess()
 
         # Check the current status before running the optimizer step 
