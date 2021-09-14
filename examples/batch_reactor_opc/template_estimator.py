@@ -20,45 +20,21 @@
 #   You should have received a copy of the GNU General Public License
 #   along with do-mpc.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-sys.path.append('../../')
-from do_mpc.opcua.opcmodules import RealtimeSimulator
+from do_mpc.opcua.realtimemodules import RealtimeEstimator
 
-def template_simulator(model, opc_opts):
+
+def template_estimator(model, opc_opts):
     """
     --------------------------------------------------------------------------
-    template_optimizer: tuning parameters
+    template_estimator: no parameters to pass, this is a "mock" state estimator
     --------------------------------------------------------------------------
     """
-    opc_opts['_opc_opts']['_client_type'] = "simulator"
-    opc_opts['_cycle_time'] = 1.0
+    # The estimator is just a delayed state feedback estimator in this case
 
-    simulator = RealtimeSimulator(model, opc_opts)
-    # simulator = do_mpc.simulator.Simulator(model)
+    opc_opts['_opc_opts']['_client_type'] = "estimator"
+    opc_opts['_cycle_time'] = 3.0  # execute every 3 seconds
+    opc_opts['_opc_opts']['_output_feedback'] = True
 
-    params_simulator = {
-        'integration_tool': 'cvodes',
-        'abstol': 1e-10,
-        'reltol': 1e-10,
-        't_step': 0.005
-    }
+    estimator = RealtimeEstimator('SFB',model,opc_opts)
 
-    simulator.set_param(**params_simulator)
-
-    tvp_num = simulator.get_tvp_template()
-    def tvp_fun(t_now):
-        return tvp_num
-
-    simulator.set_tvp_fun(tvp_fun)
-
-    p_num = simulator.get_p_template()
-    p_num['alpha'] = 1
-    p_num['beta'] = 1
-    def p_fun(t_now):
-        return p_num
-
-    simulator.set_p_fun(p_fun)
-
-    simulator.setup()
-
-    return simulator
+    return estimator

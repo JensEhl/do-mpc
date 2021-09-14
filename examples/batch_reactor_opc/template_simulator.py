@@ -22,38 +22,32 @@
 
 import sys
 sys.path.append('../../')
-from do_mpc.opcua.opcmodules import RealtimeSimulator
+from do_mpc.opcua.realtimemodules import RealtimeSimulator
+
 
 def template_simulator(model, opc_opts):
     """
     --------------------------------------------------------------------------
-    template_optimizer: tuning parameters
+    template_simulator: tuning parameters
     --------------------------------------------------------------------------
     """
     opc_opts['_opc_opts']['_client_type'] = "simulator"
-    opc_opts['_cycle_time'] = 1.0
-
+    opc_opts['_cycle_time'] = 2.0
     simulator = RealtimeSimulator(model, opc_opts)
-    # simulator = do_mpc.simulator.Simulator(model)
 
     params_simulator = {
         'integration_tool': 'cvodes',
         'abstol': 1e-10,
         'reltol': 1e-10,
-        't_step': 0.005
+        't_step': 1.0
     }
 
     simulator.set_param(**params_simulator)
 
-    tvp_num = simulator.get_tvp_template()
-    def tvp_fun(t_now):
-        return tvp_num
-
-    simulator.set_tvp_fun(tvp_fun)
-
     p_num = simulator.get_p_template()
-    p_num['alpha'] = 1
-    p_num['beta'] = 1
+    p_num['Y_x'] = 0.5
+    p_num['S_in'] = 200.0
+
     def p_fun(t_now):
         return p_num
 

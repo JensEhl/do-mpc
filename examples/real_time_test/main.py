@@ -1,21 +1,13 @@
-
-import numpy as np
-import matplotlib.pyplot as plt
-from casadi import *
 from casadi.tools import *
-import pdb
 import sys
 sys.path.append('../../')
 import do_mpc
-from do_mpc.tools.timer import Timer
 
 import matplotlib.pyplot as plt
-import pickle
 import time
 
-from do_mpc.opcmodules import Server, Client
-from do_mpc.opcmodules import RealtimeSimulator, RealtimeController, RealtimeEstimator
-from do_mpc.opcmodules import RealtimeTrigger
+from do_mpc.opcua.opcmodules import Client
+from do_mpc.opcua.opcmodules import RealtimeTrigger
 
 from template_model import template_model
 from template_mpc import template_mpc

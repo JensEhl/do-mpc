@@ -23,79 +23,57 @@
 from casadi.tools import *
 import sys
 sys.path.append('../../')
-from do_mpc.opcua.opcmodules import RealtimeController
+from do_mpc.opcua.realtimemodules import RealtimeController
 
-def template_mpc(model, opc_opts):
+def template_mpc(model,opc_opts):
     """
     --------------------------------------------------------------------------
     template_mpc: tuning parameters
     --------------------------------------------------------------------------
     """
-
     opc_opts['_opc_opts']['_client_type'] = "controller"
     opc_opts['_opc_opts']['_output_feedback'] = False
-    opc_opts['_cycle_time'] = 3.0
-
-    mpc = RealtimeController(model, opc_opts)
-
-   # mpc = do_mpc.controller.MPC(model)
+    opc_opts['_cycle_time'] = 10.0
+    mpc = RealtimeController(model,opc_opts)
 
     setup_mpc = {
         'n_horizon': 20,
-        'n_robust': 1,
+        'n_robust': 0,
         'open_loop': 0,
-        't_step': 0.005,
+        't_step': 1.0,
         'state_discretization': 'collocation',
         'collocation_type': 'radau',
         'collocation_deg': 2,
-        'collocation_ni': 1,
+        'collocation_ni': 2,
+        'store_full_solution': True,
         # Use MA27 linear solver in ipopt for faster calculations:
-        # 'nlpsol_opts': {'ipopt.linear_solver': 'MA27'}
+        #'nlpsol_opts': {'ipopt.linear_solver': 'MA27'}
     }
 
     mpc.set_param(**setup_mpc)
 
-    mpc.set_param(store_full_solution=True)
-
-    mpc.scaling['_x', 'T_R'] = 100
-    mpc.scaling['_x', 'T_K'] = 100
-    mpc.scaling['_u', 'Q_dot'] = 2000
-    mpc.scaling['_u', 'F'] = 100
-
-    _x = model.x
-
-    mterm = (_x['C_b'] - 0.6)**2
-    lterm = (_x['C_b'] - 0.6)**2
+    mterm = -model.x['P_s']
+    lterm = -model.x['P_s']
 
     mpc.set_objective(mterm=mterm, lterm=lterm)
-
-    mpc.set_rterm(F=0.1, Q_dot = 1e-3)
-
-    mpc.bounds['lower', '_x', 'C_a'] = 0.1
-    mpc.bounds['lower', '_x', 'C_b'] = 0.1
-    mpc.bounds['lower', '_x', 'T_R'] = 50
-    mpc.bounds['lower', '_x', 'T_K'] = 50
-
-    mpc.bounds['upper', '_x', 'C_a'] = 2
-    mpc.bounds['upper', '_x', 'C_b'] = 2
-    mpc.bounds['upper', '_x', 'T_K'] = 140
-
-    mpc.bounds['lower', '_u', 'F'] = 5
-    mpc.bounds['lower', '_u', 'Q_dot'] = -8500
-
-    mpc.bounds['upper', '_u', 'F'] = 100
-    mpc.bounds['upper', '_u', 'Q_dot'] = 0.0
-
-    # Instead of having a regular bound on T_R:
-    #mpc.bounds['upper', '_x', 'T_R'] = 140
-    # We can also have soft consraints as part of the set_nl_cons method:
-    mpc.set_nl_cons('T_R', _x['T_R'], ub=140, soft_constraint=True, penalty_term_cons=1e2)
+    mpc.set_rterm(inp=1.0)
 
 
-    alpha_var = np.array([1., 1.05, 0.95])
-    beta_var = np.array([1., 1.1, 0.9])
+    mpc.bounds['lower', '_x', 'X_s'] = 0.0
+    mpc.bounds['lower', '_x', 'S_s'] = -0.01
+    mpc.bounds['lower', '_x', 'P_s'] = 0.0
+    mpc.bounds['lower', '_x', 'V_s'] = 0.0
 
-    mpc.set_uncertainty_values(alpha = alpha_var, beta = beta_var)
+    mpc.bounds['upper', '_x','X_s'] = 3.7
+    mpc.bounds['upper', '_x','P_s'] = 3.0
+
+    mpc.bounds['lower','_u','inp'] = 0.0
+    mpc.bounds['upper','_u','inp'] = 0.2
+
+    Y_x_values = np.array([0.5, 0.4, 0.3])
+    S_in_values = np.array([200.0, 220.0, 180.0])
+
+    mpc.set_uncertainty_values(Y_x = Y_x_values, S_in = S_in_values)
 
     mpc.setup()
 

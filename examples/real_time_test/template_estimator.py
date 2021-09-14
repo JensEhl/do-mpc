@@ -1,10 +1,4 @@
-import numpy as np
-from casadi import *
-from casadi.tools import *
-import pdb
-import sys
-import do_mpc
-from do_mpc.opcmodules import RealtimeEstimator
+from do_mpc.opcua.opcmodules import RealtimeEstimator
 
 def template_estimator(model, opc_opts):
 
